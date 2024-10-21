@@ -1,0 +1,29 @@
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore WordPress core files
+/wp-admin/
+/wp-includes/
+/wp-content/uploads/
+/wp-content/cache/
+/wp-config.php
+
+# Ignore IDE config files
+.vscode/
+.idea/
+
+# Ignore node modules and composer dependencies
+node_modules/
+vendor/
+
+# Ignore database dumps and logs
+*.sql
+*.log
+
+# Ignore specific files related to WordPress development
+wp-config.php
+.env
+
+# Ignore IONOS workspace or cloud-specific files
+hidrive/
