@@ -1,35 +1,25 @@
-# Multisite Version Control
+# Multisite Version Control with Backups
 
 ## Overview
-Multisite Version Control is a custom WordPress plugin that enables version control across WordPress multisite networks. It tracks changes to themes, plugins, and the database using Git, making it easier to manage updates and maintain consistency across sites.
+Multisite Version Control is a custom WordPress plugin that enables version control across WordPress multisite networks. It tracks changes to themes, plugins, and the database using Git, and provides backup options for cloud services like HiDrive and Google Drive, making it easier to manage updates and ensure backups are handled.
 
 ## Features
 - Git-based version control for themes and plugins.
 - Database change tracking and logging.
+- Cloud backup to services like HiDrive, Google Drive, etc.
 - Multisite-compatible functionality.
-- Custom hooks to manage changes and commits.
-- Admin interface to manage version control settings.
+- Custom hooks to manage changes, commits, and backups.
+- Admin interface to manage version control and backup settings.
+- Auto-update functionality for the plugin.
 
 ## Installation
-1. Clone the repository to your local environment:
-    ```bash
-    git clone https://github.com/yourusername/multisite-version-control.git
-    ```
-2. Upload the `multisite-version-control` folder to the `wp-content/plugins` directory of your WordPress installation.
-3. Activate the plugin from the WordPress dashboard.
+<existing steps>
 
 ## Usage
-- Configure your Git repository and SSH access on the server.
-- Use the plugin’s admin page in the network admin to manage settings.
-- View logs of database changes and recent Git commits from the dashboard.
+- Configure your Git repository and SSH access.
+- Choose your cloud backup provider (HiDrive, Google Drive, etc.) from the admin interface.
+- Use the plugin’s admin page to manage settings and view logs.
+<...>
 
-## Development
-- Make sure you have Git and SSH access configured on your local machine.
-- Use `git pull` and `git push` to manage updates between your local environment and the GitHub repository.
-- Periodically back up the database and commit changes using the provided tools.
-
-## Contributing
-Feel free to fork the repository and submit pull requests. Contributions are welcome!
-
-## License
-MIT License. See `LICENSE` for more information.
+## Future Development
+- Automatic plugin updates to inform the user when updates are available.
