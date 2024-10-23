@@ -71,4 +71,18 @@ function mvc_enqueue_admin_assets($hook_suffix) {
 }
 add_action('admin_enqueue_scripts', 'mvc_enqueue_admin_assets');
 
-?>
+// Include the Plugin Update Checker library.
+if (file_exists(MVC_PLUGIN_DIR . 'includes/plugin-update-checker-5.5/plugin-update-checker.php')) {
+    require MVC_PLUGIN_DIR . 'includes/plugin-update-checker-5.5/plugin-update-checker.php';
+
+    // Initialize the update checker.
+    $updateChecker = \YahnisElsts\PluginUpdateChecker\v5p5\Puc_v4_Factory::buildUpdateChecker(
+        'https://github.com/ezraaym/multisite-version-control.git', // Replace this URL with your GitHub repo URL.
+        __FILE__,
+        'multisite-version-control'
+    );
+
+    // Use the "releases" endpoint to fetch GitHub releases.
+    $updateChecker->setBranch('main'); // Set the branch you are using.
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+}
