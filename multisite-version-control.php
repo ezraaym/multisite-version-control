@@ -105,4 +105,22 @@ $updateChecker->getVcsApi()->enableReleaseAssets();
 // (Optional) Enable debugging to see more information.
 $updateChecker->setDebugMode(true);
 
-delete_site_transient('update_plugins');
+// Include the Plugin Update Checker library.
+require MVC_PLUGIN_DIR . 'includes/plugin-update-checker-5.5/plugin-update-checker.php';
+
+// Initialize the update checker.
+$updateChecker = \YahnisElsts\PluginUpdateChecker\v5p5\Puc_v4_Factory::buildUpdateChecker(
+    'https://github.com/ezraaym/multisite-version-control/', // Your GitHub repository URL
+    __FILE__, // Path to the main plugin file
+    'multisite-version-control' // Unique plugin slug
+);
+
+// Set the release branch (e.g., 'main').
+$updateChecker->setBranch('main');
+
+// Enable fetching release assets from GitHub.
+$updateChecker->getVcsApi()->enableReleaseAssets();
+
+// Enable debug mode to see more information.
+$updateChecker->setDebugMode(true);
+
