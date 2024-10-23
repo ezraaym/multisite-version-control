@@ -2,9 +2,10 @@
 /**
  * Plugin Name: Multisite Version Control
  * Description: A plugin for version control across WordPress multisite networks, with backup and update management.
- * Version: 1.2
+ * Version: 1.3
  * Author: aym
  * Author URI: https://www.aymscores.com
+ * Plugin URI: https://www.aymscores.com
  * Network: true
  */
 
@@ -26,6 +27,13 @@ include_once MVC_PLUGIN_DIR . 'includes/helpers.php';
 // Activate/Deactivate hooks.
 register_activation_hook(__FILE__, 'mvc_activate_plugin');
 register_deactivation_hook(__FILE__, 'mvc_deactivate_plugin');
+
+// Initialize the update checker.
+$updateChecker = \YahnisElsts\PluginUpdateChecker\v5p5\Puc_v4_Factory::buildUpdateChecker(
+    'https://github.com/ezraaym/multisite-version-control.git', // GitHub repository URL
+    __FILE__, // Path to the main plugin file
+    'multisite-version-control' // Unique plugin slug
+);
 
 function mvc_activate_plugin() {
     // Code to run on plugin activation.

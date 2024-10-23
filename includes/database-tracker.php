@@ -16,4 +16,22 @@ function mvc_track_db_changes($query) {
 // Hook into database queries.
 add_filter('query', 'mvc_track_db_changes');
 
+function mvc_log_to_file($message) {
+    $logFile = MVC_PLUGIN_DIR . 'logs/database.log';
+    
+    // Create the log directory if it doesn't exist.
+    if (!file_exists(dirname($logFile))) {
+        mkdir(dirname($logFile), 0755, true);
+    }
+    
+    // Add a timestamp to the log message.
+    $formattedMessage = date('Y-m-d H:i:s') . ' - ' . $message . PHP_EOL;
+    
+    // Append the message to the log file.
+    file_put_contents($logFile, $formattedMessage, FILE_APPEND);
+}
+
+// Example usage in your database tracker functions:
+mvc_log_to_file('Database operation started.');
+
 ?>
