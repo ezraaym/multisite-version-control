@@ -2,8 +2,9 @@
 /**
  * Plugin Name: Multisite Version Control
  * Description: A plugin for version control across WordPress multisite networks, with backup and update management.
- * Version: 1.0
- * Author: Your Name
+ * Version: 1.1
+ * Author: aym
+ * Author URI: https://www.aymscores.com
  * Network: true
  */
 
@@ -36,7 +37,7 @@ function mvc_deactivate_plugin() {
     mvc_cleanup_plugin();
 }
 
-// Admin Menu Setup.
+// Admin Menu Setup in the Network Admin.
 add_action('network_admin_menu', 'mvc_add_admin_menu');
 function mvc_add_admin_menu() {
     add_menu_page(
@@ -50,10 +51,23 @@ function mvc_add_admin_menu() {
     );
 }
 
-// Load assets.
-function mvc_enqueue_admin_assets() {
-    wp_enqueue_style('mvc-admin-css', plugins_url('assets/css/admin.css', __FILE__));
-    wp_enqueue_script('mvc-admin-js', plugins_url('assets/js/admin.js', __FILE__));
+// Render the admin settings page.
+function mvc_render_admin_settings_page() {
+    ?>
+    <div class="wrap">
+        <h1>Multisite Version Control Settings</h1>
+        <p>Manage the settings for version control on your WordPress Multisite network.</p>
+    </div>
+    <?php
+}
+
+// Enqueue admin assets.
+function mvc_enqueue_admin_assets($hook_suffix) {
+    // Load CSS and JS only on the plugin settings page.
+    if ($hook_suffix === 'settings_page_mvc-settings') {
+        wp_enqueue_style('mvc-admin-css', plugins_url('assets/css/admin.css', __FILE__));
+        wp_enqueue_script('mvc-admin-js', plugins_url('assets/js/admin.js', __FILE__));
+    }
 }
 add_action('admin_enqueue_scripts', 'mvc_enqueue_admin_assets');
 
