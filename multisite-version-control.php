@@ -86,3 +86,23 @@ if (file_exists(MVC_PLUGIN_DIR . 'includes/plugin-update-checker-5.5/plugin-upda
     $updateChecker->setBranch('main'); // Set the branch you are using.
     $updateChecker->getVcsApi()->enableReleaseAssets();
 }
+// Include the Plugin Update Checker library.
+require MVC_PLUGIN_DIR . 'includes/plugin-update-checker-5.5/plugin-update-checker.php';
+
+// Initialize the update checker.
+$updateChecker = \YahnisElsts\PluginUpdateChecker\v5p5\Puc_v4_Factory::buildUpdateChecker(
+    'https://github.com/ezraaym/multisite-version-control.git', // Your GitHub repository URL.
+    __FILE__, // Path to the main plugin file.
+    'multisite-version-control' // Unique plugin slug.
+);
+
+// Set the release branch (e.g., 'main').
+$updateChecker->setBranch('main');
+
+// Enable fetching release assets from GitHub.
+$updateChecker->getVcsApi()->enableReleaseAssets();
+
+// (Optional) Enable debugging to see more information.
+$updateChecker->setDebugMode(true);
+
+delete_site_transient('update_plugins');
