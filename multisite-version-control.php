@@ -30,11 +30,25 @@ include_once MVC_PLUGIN_DIR . 'includes/version-history/version-history.php';
 include_once MVC_PLUGIN_DIR . 'includes/database/database-tracker.php';
 
 // Initialize classes
-new \MVC\Backup\Backup_Manager();
-new \MVC\Version\Version_History();
-new \MVC\Database\Database_Tracker();
+if ( class_exists( '\MVC\Backup\Backup_Manager' ) ) {
+    new \MVC\Backup\Backup_Manager();
+} else {
+    error_log( '[MVC] Failed to load Backup_Manager class.' );
+}
 
-// Include admin page setup.
+if ( class_exists( '\MVC\Version\Version_History' ) ) {
+    new \MVC\Version\Version_History();
+} else {
+    error_log( '[MVC] Failed to load Version_History class.' );
+}
+
+if ( class_exists( '\MVC\Database\Database_Tracker' ) ) {
+    new \MVC\Database\Database_Tracker();
+} else {
+    error_log( '[MVC] Failed to load Database_Tracker class.' );
+}
+
+// Include admin page setup
 require_once MVC_PLUGIN_DIR . 'includes/admin.php';
 
 // Add a settings page to the network admin menu
@@ -55,6 +69,11 @@ function mvc_render_backup_settings_page() {
     // Get current option values
     $backup_destination = get_option( 'mvc_backup_destination', 'local' );
     $ftp_details = get_option( 'mvc_ftp_details', [] );
+
+    // Ensure keys exist for FTP details
+    $ftp_host = ! empty( $ftp_details['host'] ) ? sanitize_text_field( $ftp_details['host'] ) : '';
+    $ftp_user = ! empty( $ftp_details['user'] ) ? sanitize_text_field( $ftp_details['user'] ) : '';
+    $ftp_pass = ! empty( $ftp_details['pass'] ) ? sanitize_text_field( $ftp_details['pass'] ) : '';
 
     ?>
     <div class="wrap">
@@ -79,9 +98,9 @@ function mvc_render_backup_settings_page() {
                 <tr class="ftp-details">
                     <th scope="row">FTP Details</th>
                     <td>
-                        <input type="text" name="mvc_ftp_details[host]" placeholder="FTP Host" value="<?php echo esc_attr( $ftp_details['host'] ?? '' ); ?>">
-                        <input type="text" name="mvc_ftp_details[user]" placeholder="FTP User" value="<?php echo esc_attr( $ftp_details['user'] ?? '' ); ?>">
-                        <input type="password" name="mvc_ftp_details[pass]" placeholder="FTP Password" value="<?php echo esc_attr( $ftp_details['pass'] ?? '' ); ?>">
+                        <input type="text" name="mvc_ftp_details[host]" placeholder="FTP Host" value="<?php echo esc_attr( $ftp_host ); ?>">
+                        <input type="text" name="mvc_ftp_details[user]" placeholder="FTP User" value="<?php echo esc_attr( $ftp_user ); ?>">
+                        <input type="password" name="mvc_ftp_details[pass]" placeholder="FTP Password" value="<?php echo esc_attr( $ftp_pass ); ?>">
                     </td>
                 </tr>
             </table>
@@ -98,10 +117,10 @@ function mvc_register_backup_settings() {
     register_setting( 'mvc_backup_options', 'mvc_ftp_details' );
 }
 
-// Include updater.
+// Include updater
 require_once MVC_PLUGIN_DIR . 'includes/updater/updater.php';
 
-// Initialize the updater.
+// Initialize the updater
 add_action( 'plugins_loaded', 'mvc_initialize_updater' );
 function mvc_initialize_updater() {
     if ( class_exists( 'MVC\Updater\Updater' ) ) {
@@ -109,7 +128,7 @@ function mvc_initialize_updater() {
     }
 }
 
-// Activation and Deactivation Hooks.
+// Activation and Deactivation Hooks
 register_activation_hook( __FILE__, 'mvc_activate_plugin' );
 register_deactivation_hook( __FILE__, 'mvc_deactivate_plugin' );
 function mvc_activate_plugin() {
