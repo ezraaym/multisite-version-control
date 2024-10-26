@@ -20,6 +20,10 @@ class Version_History {
         register_activation_hook( MVC_PLUGIN_FILE, [ $this, 'log_version' ] );
     }
 
+    public function track_version_history() {
+        // Logic for tracking version history
+    }
+    
     public function log_version() {
         $version = get_option( 'mvc_plugin_version', '1.0' );
         $new_version = MVC_VERSION;
