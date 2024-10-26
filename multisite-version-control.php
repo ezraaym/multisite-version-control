@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Multisite Version Control
  * Description: A plugin for version control across WordPress multisite networks, with backup and update management.
- * Version: 1.4
+ * Version: 1.5
  * Author: aym
  * Author URI: https://www.aymscores.com
  * Plugin URI: https://www.aymscores.com
@@ -23,6 +23,16 @@ define( 'MVC_PLUGIN_SLUG', basename( __FILE__, '.php' ) );
 
 // Include the autoloader.
 require_once MVC_PLUGIN_DIR . 'includes/autoload.php';
+
+// Include core files
+include_once MVC_PLUGIN_DIR . 'includes/backup-manager.php';
+include_once MVC_PLUGIN_DIR . 'includes/version-history.php';
+include_once MVC_PLUGIN_DIR . 'includes/database-tracker.php';
+
+// Initialize classes (if not done already in the files)
+new \MVC\Backup\Backup_Manager();
+new \MVC\Version\Version_History();
+new \MVC\Database\Database_Tracker();
 
 // Include admin page setup.
 require_once MVC_PLUGIN_DIR . 'includes/admin.php';

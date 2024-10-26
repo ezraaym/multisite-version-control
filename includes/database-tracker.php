@@ -1,26 +1,42 @@
 <?php
 
-function mvc_log_database_change($query) {
-    // Log the database query.
-    $log_file = MVC_PLUGIN_DIR . 'logs/database.log';
+namespace MVC\Database;
 
-    // Create the log directory if it doesn't exist.
-    if (!file_exists(dirname($log_file))) {
-        mkdir(dirname($log_file), 0755, true);
-    }
-
-    // Append the query to the log file.
-    file_put_contents($log_file, $query . PHP_EOL, FILE_APPEND);
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
 }
 
-function mvc_track_db_changes($query) {
-    // Track any changes made to the database.
-    $lower_query = strtolower($query);
-    if (strpos($lower_query, 'update') !== false || strpos($lower_query, 'insert') !== false || strpos($lower_query, 'delete') !== false) {
-        mvc_log_database_change($query);
+class Database_Tracker {
+
+    public function __construct() {
+        $this->setup_hooks();
+    }
+
+    private function setup_hooks() {
+        register_activation_hook( MVC_PLUGIN_FILE, [ $this, 'track_database_version' ] );
+    }
+
+    public function track_database_version() {
+        $db_version = get_option( 'mvc_database_version', '1.0' );
+        $new_db_version = '1.1'; // Update as per your changes
+
+        // If database version is lower, run upgrade script
+        if ( version_compare( $db_version, $new_db_version, '<' ) ) {
+            $this->upgrade_database( $db_version, $new_db_version );
+            update_option( 'mvc_database_version', $new_db_version );
+        }
+    }
+
+    private function upgrade_database( $old_version, $new_version ) {
+        global $wpdb;
+
+        if ( version_compare( $old_version, '1.1', '<' ) ) {
+            // Example of adding a new column to a custom table
+            $table_name = $wpdb->prefix . 'mvc_custom_table';
+            $wpdb->query( "ALTER TABLE $table_name ADD COLUMN new_column VARCHAR(255) DEFAULT ''" );
+        }
     }
 }
 
-// Hook into database queries.
-add_filter('query', 'mvc_track_db_changes');
-?>
+// Initialize the database tracker
+new Database_Tracker();
