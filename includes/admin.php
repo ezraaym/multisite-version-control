@@ -18,6 +18,16 @@ function mvc_render_admin_settings_page() {
         <h1>Multisite Version Control Settings</h1>
         <p>Manage the settings for version control on your WordPress Multisite network.</p>
     </div>
+
+    <div class="wrap">
+        <h1>MVC Backup Settings</h1>
+        <!-- Backup Now Button -->
+        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+            <input type="hidden" name="action" value="mvc_trigger_backup">
+            <?php wp_nonce_field( 'mvc_backup_now', 'mvc_backup_nonce' ); ?>
+            <button type="submit" class="button-secondary">Backup Now</button>
+        </form>
+    </div>
     <?php
 }
 

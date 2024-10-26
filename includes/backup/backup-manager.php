@@ -13,38 +13,108 @@ class Backup_Manager {
     public function __construct() {
         $this->backup_dir = WP_CONTENT_DIR . '/mvc-backups/';
         $this->setup_hooks();
+        $this->create_backup_directory();
     }
 
     private function setup_hooks() {
-        // Hook to create a backup before plugin update
         add_action( 'pre_set_site_transient_update_plugins', [ $this, 'backup_plugin_files' ] );
+        add_action( 'admin_post_mvc_trigger_backup', [ $this, 'handle_backup_request' ] );
     }
 
-    public function backup_plugin_files( $transient ) {
-        // Create backup directory if it doesn't exist
+    private function create_backup_directory() {
         if ( ! file_exists( $this->backup_dir ) ) {
-            if ( ! wp_mkdir_p( $this->backup_dir ) ) {
-                error_log( '[MVC Backup] Failed to create backup directory: ' . $this->backup_dir );
-                return $transient;
-            }
+            wp_mkdir_p( $this->backup_dir );
+        }
+    }
+
+    public function handle_backup_request() {
+        if ( ! isset( $_POST['mvc_backup_nonce'] ) || ! wp_verify_nonce( $_POST['mvc_backup_nonce'], 'mvc_backup_now' ) ) {
+            wp_die( 'Invalid request.' );
         }
 
-        // Create a backup zip file of the current plugin version
-        $plugin_dir = plugin_dir_path( __DIR__ );
-        $backup_file = $this->backup_dir . 'mvc-backup-' . date( 'Y-m-d-H-i-s' ) . '.zip';
+        if ( $this->backup_to_local() ) {
+            wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings', 'backup' => 'success' ], admin_url( 'network/admin.php' ) ) );
+        } else {
+            wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings', 'backup' => 'failed' ], admin_url( 'network/admin.php' ) ) );
+        }
+        exit;
+    }
 
-        // Use the ZipArchive class to create the zip backup
+    // Create a local backup of the plugin files
+    public function backup_to_local() {
+        $backup_file = $this->backup_dir . 'local-backup-' . date( 'Y-m-d-H-i-s' ) . '.zip';
+        
         $zip = new \ZipArchive();
         if ( $zip->open( $backup_file, \ZipArchive::CREATE ) === true ) {
+            $plugin_dir = plugin_dir_path( __DIR__ );
             $this->add_files_to_zip( $plugin_dir, $zip );
             $zip->close();
-            error_log( '[MVC Backup] Backup created: ' . $backup_file );
+            error_log( '[MVC Backup] Local backup created: ' . $backup_file );
+            return $backup_file; // Return the backup file path
         } else {
-            error_log( '[MVC Backup] Failed to create backup zip file: ' . $backup_file );
+            error_log( '[MVC Backup] Failed to create local backup zip file: ' . $backup_file );
+            return false;
+        }
+    }
+
+    // FTP backup function
+    public function backup_to_ftp( $ftp_details ) {
+        $backup_file = $this->backup_to_local();
+        if ( ! $backup_file ) {
+            return;
         }
 
-        return $transient;
+        $ftp_conn = ftp_connect( $ftp_details['host'] );
+        if ( ! $ftp_conn ) {
+            error_log( '[MVC Backup] Failed to connect to FTP server.' );
+            return;
+        }
+
+        $login = ftp_login( $ftp_conn, $ftp_details['user'], $ftp_details['pass'] );
+        if ( ! $login ) {
+            error_log( '[MVC Backup] FTP login failed for user: ' . $ftp_details['user'] );
+            ftp_close( $ftp_conn );
+            return;
+        }
+
+        if ( ! ftp_put( $ftp_conn, 'remote-backup.zip', $backup_file, FTP_BINARY ) ) {
+            error_log( '[MVC Backup] Failed to upload backup file to FTP server.' );
+        } else {
+            error_log( '[MVC Backup] Backup uploaded to FTP server.' );
+        }
+
+        ftp_close( $ftp_conn );
     }
+
+    // Function to add admin notice based on backup result
+public function add_admin_notice( $message, $type = 'success' ) {
+    add_action( 'admin_notices', function() use ( $message, $type ) {
+        echo '<div class="notice notice-' . esc_attr( $type ) . ' is-dismissible">';
+        echo '<p>' . esc_html( $message ) . '</p>';
+        echo '</div>';
+    });
+}
+
+// Update the handle_backup_request() method
+public function handle_backup_request() {
+    // Check nonce
+    if ( ! isset( $_POST['mvc_backup_nonce'] ) || ! wp_verify_nonce( $_POST['mvc_backup_nonce'], 'mvc_backup_now' ) ) {
+        $this->add_admin_notice( 'Invalid request.', 'error' );
+        wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings' ], admin_url( 'network/admin.php' ) ) );
+        exit;
+    }
+
+    // Perform the backup
+    if ( $this->backup_to_local() ) {
+        $this->add_admin_notice( 'Backup successfully created!', 'success' );
+    } else {
+        $this->add_admin_notice( 'Failed to create backup!', 'error' );
+    }
+
+    // Redirect back to the settings page
+    wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings' ], admin_url( 'network/admin.php' ) ) );
+    exit;
+}
 
     private function add_files_to_zip( $dir, $zip, $relative_path = '' ) {
         $files = scandir( $dir );
@@ -62,71 +132,6 @@ class Backup_Manager {
                 $zip->addFile( $file_path, $zip_path );
             }
         }
-    }
-
-    // Handle local backups
-    public function backup_to_local() {
-        $backup_file = $this->backup_dir . 'local-backup-' . date( 'Y-m-d-H-i-s' ) . '.zip';
-
-        // Check if directory exists, if not, create it
-        if ( ! file_exists( $this->backup_dir ) ) {
-            if ( ! wp_mkdir_p( $this->backup_dir ) ) {
-                error_log( '[MVC Backup] Failed to create local backup directory: ' . $this->backup_dir );
-                return false;
-            }
-        }
-
-        // Use the ZipArchive class to create the zip backup
-        $zip = new \ZipArchive();
-        if ( $zip->open( $backup_file, \ZipArchive::CREATE ) === true ) {
-            $this->add_files_to_zip( plugin_dir_path( __DIR__ ), $zip );
-            $zip->close();
-            error_log( '[MVC Backup] Local backup created: ' . $backup_file );
-            return true;
-        } else {
-            error_log( '[MVC Backup] Failed to create local backup zip file: ' . $backup_file );
-            return false;
-        }
-    }
-
-    // Handle FTP backups
-    public function backup_to_ftp( $ftp_details ) {
-        // Create local backup first
-        $backup_file = $this->backup_dir . 'ftp-backup-' . date( 'Y-m-d-H-i-s' ) . '.zip';
-        if ( ! $this->backup_to_local() ) {
-            return; // Stop if local backup fails
-        }
-
-        // Connect to FTP server
-        $ftp_conn = ftp_connect( $ftp_details['host'] );
-        if ( ! $ftp_conn ) {
-            error_log( '[MVC Backup] Failed to connect to FTP server.' );
-            return;
-        }
-
-        // Login to FTP server
-        $login = ftp_login( $ftp_conn, $ftp_details['user'], $ftp_details['pass'] );
-        if ( ! $login ) {
-            error_log( '[MVC Backup] FTP login failed for user: ' . $ftp_details['user'] );
-            ftp_close( $ftp_conn );
-            return;
-        }
-
-        // Upload the backup file to FTP server
-        if ( ! ftp_put( $ftp_conn, 'remote-backup.zip', $backup_file, FTP_BINARY ) ) {
-            error_log( '[MVC Backup] Failed to upload backup file to FTP server.' );
-        } else {
-            error_log( '[MVC Backup] Backup uploaded to FTP server.' );
-        }
-
-        // Close FTP connection
-        ftp_close( $ftp_conn );
-    }
-
-    // Handle S3 backups (Placeholder for future implementation)
-    public function backup_to_s3() {
-        error_log( '[MVC Backup] S3 backup functionality not implemented yet.' );
-        // Placeholder: Add S3 backup logic here
     }
 }
 
