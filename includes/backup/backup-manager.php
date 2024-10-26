@@ -27,19 +27,6 @@ class Backup_Manager {
         }
     }
 
-    public function handle_backup_request() {
-        if ( ! isset( $_POST['mvc_backup_nonce'] ) || ! wp_verify_nonce( $_POST['mvc_backup_nonce'], 'mvc_backup_now' ) ) {
-            wp_die( 'Invalid request.' );
-        }
-
-        if ( $this->backup_to_local() ) {
-            wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings', 'backup' => 'success' ], admin_url( 'network/admin.php' ) ) );
-        } else {
-            wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings', 'backup' => 'failed' ], admin_url( 'network/admin.php' ) ) );
-        }
-        exit;
-    }
-
     // Create a local backup of the plugin files
     public function backup_to_local() {
         $backup_file = $this->backup_dir . 'local-backup-' . date( 'Y-m-d-H-i-s' ) . '.zip';
