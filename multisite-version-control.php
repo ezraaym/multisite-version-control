@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Multisite Version Control
  * Description: A plugin for version control across WordPress multisite networks, with backup and update management.
- * Version: 1.5
+ * Version: 1.6
  * Author: aym
  * Author URI: https://www.aymscores.com
  * Plugin URI: https://www.aymscores.com
