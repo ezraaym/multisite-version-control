@@ -1,3 +1,5 @@
+<?php
+
 namespace MVC\Database;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,6 +24,7 @@ class Database_Tracker {
     public function create_custom_table() {
         global $wpdb;
 
+        // Check if the table exists before attempting to create it
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->table_name}'" ) !== $this->table_name ) {
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE {$this->table_name} (
@@ -30,7 +33,7 @@ class Database_Tracker {
                 PRIMARY KEY  (id)
             ) $charset_collate;";
 
-            require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
             dbDelta( $sql );
         }
     }
@@ -39,6 +42,7 @@ class Database_Tracker {
         $db_version = get_option( 'mvc_database_version', '1.0' );
         $new_db_version = '1.1';
 
+        // Upgrade the database if the version is outdated
         if ( version_compare( $db_version, $new_db_version, '<' ) ) {
             $this->upgrade_database();
             update_option( 'mvc_database_version', $new_db_version );
@@ -48,6 +52,7 @@ class Database_Tracker {
     private function upgrade_database() {
         global $wpdb;
 
+        // Ensure the table exists before altering it
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$this->table_name}'" ) === $this->table_name ) {
             $wpdb->query( "ALTER TABLE {$this->table_name} ADD COLUMN new_column VARCHAR(255) DEFAULT ''" );
         } else {
