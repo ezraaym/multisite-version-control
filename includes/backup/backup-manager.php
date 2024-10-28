@@ -17,7 +17,7 @@ class Backup_Manager {
     }
 
     private function setup_hooks() {
-        add_action( 'pre_set_site_transient_update_plugins', [ $this, 'backup_plugin_files' ] );
+        // Hook to trigger manual backup via admin action
         add_action( 'admin_post_mvc_trigger_backup', [ $this, 'handle_backup_request' ] );
     }
 
@@ -44,65 +44,28 @@ class Backup_Manager {
         }
     }
 
-    // FTP backup function
-    public function backup_to_ftp( $ftp_details ) {
-        $backup_file = $this->backup_to_local();
-        if ( ! $backup_file ) {
-            return;
+    // Function to handle backup request from admin
+    public function handle_backup_request() {
+        // Check nonce
+        if ( ! isset( $_POST['mvc_backup_nonce'] ) || ! wp_verify_nonce( $_POST['mvc_backup_nonce'], 'mvc_backup_now' ) ) {
+            $this->add_admin_notice( 'Invalid request.', 'error' );
+            wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings' ], admin_url( 'network/admin.php' ) ) );
+            exit;
         }
 
-        $ftp_conn = ftp_connect( $ftp_details['host'] );
-        if ( ! $ftp_conn ) {
-            error_log( '[MVC Backup] Failed to connect to FTP server.' );
-            return;
-        }
-
-        $login = ftp_login( $ftp_conn, $ftp_details['user'], $ftp_details['pass'] );
-        if ( ! $login ) {
-            error_log( '[MVC Backup] FTP login failed for user: ' . $ftp_details['user'] );
-            ftp_close( $ftp_conn );
-            return;
-        }
-
-        if ( ! ftp_put( $ftp_conn, 'remote-backup.zip', $backup_file, FTP_BINARY ) ) {
-            error_log( '[MVC Backup] Failed to upload backup file to FTP server.' );
+        // Perform the backup
+        if ( $this->backup_to_local() ) {
+            $this->add_admin_notice( 'Backup successfully created!', 'success' );
         } else {
-            error_log( '[MVC Backup] Backup uploaded to FTP server.' );
+            $this->add_admin_notice( 'Failed to create backup!', 'error' );
         }
 
-        ftp_close( $ftp_conn );
-    }
-
-    // Function to add admin notice based on backup result
-public function add_admin_notice( $message, $type = 'success' ) {
-    add_action( 'admin_notices', function() use ( $message, $type ) {
-        echo '<div class="notice notice-' . esc_attr( $type ) . ' is-dismissible">';
-        echo '<p>' . esc_html( $message ) . '</p>';
-        echo '</div>';
-    });
-}
-
-// Update the handle_backup_request() method
-public function handle_backup_request() {
-    // Check nonce
-    if ( ! isset( $_POST['mvc_backup_nonce'] ) || ! wp_verify_nonce( $_POST['mvc_backup_nonce'], 'mvc_backup_now' ) ) {
-        $this->add_admin_notice( 'Invalid request.', 'error' );
+        // Redirect back to the settings page
         wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings' ], admin_url( 'network/admin.php' ) ) );
         exit;
     }
 
-    // Perform the backup
-    if ( $this->backup_to_local() ) {
-        $this->add_admin_notice( 'Backup successfully created!', 'success' );
-    } else {
-        $this->add_admin_notice( 'Failed to create backup!', 'error' );
-    }
-
-    // Redirect back to the settings page
-    wp_redirect( add_query_arg( [ 'page' => 'mvc-backup-settings' ], admin_url( 'network/admin.php' ) ) );
-    exit;
-}
-
+    // Function to add files to zip archive
     private function add_files_to_zip( $dir, $zip, $relative_path = '' ) {
         $files = scandir( $dir );
         foreach ( $files as $file ) {
@@ -119,6 +82,15 @@ public function handle_backup_request() {
                 $zip->addFile( $file_path, $zip_path );
             }
         }
+    }
+
+    // Function to add admin notice based on backup result
+    public function add_admin_notice( $message, $type = 'success' ) {
+        add_action( 'admin_notices', function() use ( $message, $type ) {
+            echo '<div class="notice notice-' . esc_attr( $type ) . ' is-dismissible">';
+            echo '<p>' . esc_html( $message ) . '</p>';
+            echo '</div>';
+        });
     }
 }
 
